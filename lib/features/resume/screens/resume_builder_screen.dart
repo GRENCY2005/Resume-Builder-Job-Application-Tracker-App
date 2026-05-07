@@ -93,19 +93,50 @@ class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
 
   // --- Dynamic Input Helpers ---
 
-  void _addItemToList(TextEditingController controller, List<String> list) {
+  void _addItemToList(String type) {
+    TextEditingController controller;
+    if (type == 'Skills') {
+      controller = _skillController;
+    } else if (type == 'Education') {
+      controller = _educationController;
+    } else {
+      controller = _experienceController;
+    }
+
     final text = controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
-        list.add(text);
+        if (type == 'Skills') {
+          _skills = [..._skills, text];
+        } else if (type == 'Education') {
+          _education = [..._education, text];
+        } else if (type == 'Experience') {
+          _experience = [..._experience, text];
+        }
         controller.clear();
       });
+
+      // Feedback to user that item was added
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added to $type'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          width: 200,
+        ),
+      );
     }
   }
 
-  void _removeItemFromList(int index, List<String> list) {
+  void _removeItemFromList(int index, String type) {
     setState(() {
-      list.removeAt(index);
+      if (type == 'Skills') {
+        _skills = List.from(_skills)..removeAt(index);
+      } else if (type == 'Education') {
+        _education = List.from(_education)..removeAt(index);
+      } else if (type == 'Experience') {
+        _experience = List.from(_experience)..removeAt(index);
+      }
     });
   }
 
@@ -167,9 +198,9 @@ class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
-                  onPressed: () => _addItemToList(controller, items),
+                  onPressed: () => _addItemToList(title),
                   icon: const Icon(Icons.add),
-                  tooltip: 'Add $title',
+                  tooltip: 'Add to $title',
                 ),
               ],
             ),
@@ -193,7 +224,7 @@ class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
                 children: items.asMap().entries.map((entry) {
                   return Chip(
                     label: Text(entry.value),
-                    onDeleted: () => _removeItemFromList(entry.key, items),
+                    onDeleted: () => _removeItemFromList(entry.key, title),
                     deleteIconColor: Theme.of(context).colorScheme.error,
                   );
                 }).toList(),
@@ -216,7 +247,7 @@ class _ResumeBuilderScreenState extends ConsumerState<ResumeBuilderScreen> {
                       title: Text(items[index]),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                        onPressed: () => _removeItemFromList(index, items),
+                        onPressed: () => _removeItemFromList(index, title),
                       ),
                     ),
                   );

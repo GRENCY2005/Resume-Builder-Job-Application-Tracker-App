@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../core/services/sync_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_resume_tracker/core/services/sync_service.dart';
+import 'package:smart_resume_tracker/core/providers/theme_provider.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+    // Explicitly check if we are in dark mode (taking system setting into account)
+    final isDark = themeMode == ThemeMode.dark || 
+                  (themeMode == ThemeMode.system && MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -14,19 +21,19 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Theme Toggle Placeholder
+          // Theme Toggle
           Card(
             elevation: 0,
             color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListTile(
-              leading: const Icon(Icons.dark_mode_outlined),
+              leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode_outlined),
               title: const Text('Dark Mode'),
-              subtitle: const Text('Toggle app theme (Coming soon)'),
+              subtitle: Text(isDark ? 'Dark theme enabled' : 'Light theme enabled'),
               trailing: Switch(
-                value: false,
+                value: isDark,
                 onChanged: (val) {
-                  // TODO: Implement Theme Provider
+                  ref.read(themeProvider.notifier).toggleTheme(val);
                 },
               ),
             ),

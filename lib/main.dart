@@ -5,6 +5,7 @@ import 'package:smart_resume_tracker/core/services/hive_service.dart';
 import 'package:smart_resume_tracker/core/services/sync_service.dart';
 import 'package:smart_resume_tracker/core/theme/app_theme.dart';
 import 'package:smart_resume_tracker/routes/app_router.dart';
+import 'package:smart_resume_tracker/core/providers/theme_provider.dart';
 
 void main() async {
   // 1. Ensure Flutter binding is initialized
@@ -36,17 +37,20 @@ void main() async {
   );
 }
 
-class SmartResumeTrackerApp extends StatelessWidget {
+class SmartResumeTrackerApp extends ConsumerWidget {
   const SmartResumeTrackerApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+
     return MaterialApp.router(
       title: 'Smart Resume Tracker',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: appRouter,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
