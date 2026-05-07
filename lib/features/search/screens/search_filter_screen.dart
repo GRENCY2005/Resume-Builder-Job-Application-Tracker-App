@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../applications/models/application_model.dart';
 import '../../applications/providers/application_provider.dart';
 import '../../resume/providers/resume_provider.dart';
+import '../../../core/widgets/shared_components.dart';
 
 class SearchFilterScreen extends ConsumerStatefulWidget {
   const SearchFilterScreen({super.key});
@@ -113,25 +114,14 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Search Bar
-                TextField(
+                SearchBarWidget(
                   controller: _searchController,
-                  onChanged: (value) => setState(() {}), // Trigger rebuild for live search
-                  decoration: InputDecoration(
-                    hintText: 'Search company or job role...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                  ),
+                  hintText: 'Search company or job role...',
+                  onClear: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                  onChanged: (value) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
                 
@@ -206,15 +196,10 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
           // --- Results Section ---
           Expanded(
             child: filteredApps.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off, size: 80, color: Theme.of(context).colorScheme.outline),
-                        const SizedBox(height: 16),
-                        Text('No results found.', style: Theme.of(context).textTheme.titleLarge),
-                      ],
-                    ),
+                ? const EmptyStateWidget(
+                    icon: Icons.search_off,
+                    title: 'No results found',
+                    message: 'Try adjusting your filters.',
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
@@ -232,7 +217,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                           title: Text(app.companyName, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text('${app.jobRole}\nApplied: ${DateFormat('MMM dd, yyyy').format(app.dateApplied)}'),
                           isThreeLine: true,
-                          trailing: _buildStatusBadge(context, app.status),
+                          trailing: StatusBadge(status: app.status),
                         ),
                       );
                     },
@@ -243,29 +228,6 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
     );
   }
 
-  Widget _buildStatusBadge(BuildContext context, ApplicationStatus status) {
-    Color badgeColor;
-    switch (status) {
-      case ApplicationStatus.applied: badgeColor = Colors.blueGrey; break;
-      case ApplicationStatus.shortlisted: badgeColor = Colors.orange; break;
-      case ApplicationStatus.interviewScheduled: badgeColor = Colors.purple; break;
-      case ApplicationStatus.rejected: badgeColor = Colors.red; break;
-      case ApplicationStatus.selected: badgeColor = Colors.green; break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: badgeColor.withOpacity(0.5)),
-      ),
-      child: Text(
-        _statusToString(status),
-        style: TextStyle(color: badgeColor, fontSize: 12, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
 
   String _statusToString(ApplicationStatus status) {
     switch (status) {

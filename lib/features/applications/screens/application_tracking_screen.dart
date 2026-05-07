@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
 
 import '../models/application_model.dart';
 import '../providers/application_provider.dart';
 import '../../resume/providers/resume_provider.dart';
-import 'application_entry_screen.dart';
+import '../../../core/widgets/shared_components.dart';
+import '../widgets/application_card.dart';
 
 class ApplicationTrackingScreen extends ConsumerWidget {
   const ApplicationTrackingScreen({super.key});
 
   void _navigateToAddApplication(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ApplicationEntryScreen()),
-    );
+    context.push('/applications/entry');
   }
 
   void _updateStatus(BuildContext context, WidgetRef ref, JobApplicationModel application) {
@@ -81,28 +80,15 @@ class ApplicationTrackingScreen extends ConsumerWidget {
 
   Widget _buildBody(BuildContext context, WidgetRef ref, ApplicationState state) {
     if (state.isLoading && state.filteredApplications.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingIndicator();
     }
 
     if (state.filteredApplications.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.work_off_outlined, size: 80, color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
-            const SizedBox(height: 24),
-            Text(
-              'No Applications Found',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start tracking your job applications today.',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ).animate().fadeIn(duration: 500.ms).scale(duration: 500.ms),
-      );
+      return const EmptyStateWidget(
+        icon: Icons.work_off_outlined,
+        title: 'No Applications Found',
+        message: 'Start tracking your job applications today.',
+      ).animate().fadeIn(duration: 500.ms).scale(duration: 500.ms);
     }
 
     return ListView.builder(
@@ -134,117 +120,11 @@ class ApplicationTrackingScreen extends ConsumerWidget {
     final resumes = ref.read(resumeProvider).resumes;
     final linkedResume = resumes.where((r) => r.id == app.resumeId).firstOrNull;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 16),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => _updateStatus(context, ref, app),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      app.companyName,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  _buildStatusBadge(context, app.status),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                app.jobRole,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Applied: ${DateFormat('MMM dd, yyyy').format(app.dateApplied)}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-              if (linkedResume != null) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.description_outlined, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Resume: ${linkedResume.fullName}',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return ApplicationCard(
+      application: app,
+      linkedResumeName: linkedResume?.fullName,
+      onTap: () => _updateStatus(context, ref, app),
     ).animate().fadeIn(delay: (index * 50).ms, duration: 400.ms).slideY(begin: 0.2, end: 0, duration: 400.ms);
-  }
-
-  Widget _buildStatusBadge(BuildContext context, ApplicationStatus status) {
-    Color badgeColor;
-    Color textColor = Colors.white;
-
-    switch (status) {
-      case ApplicationStatus.applied:
-        badgeColor = Colors.blueGrey;
-        break;
-      case ApplicationStatus.shortlisted:
-        badgeColor = Colors.orange;
-        break;
-      case ApplicationStatus.interviewScheduled:
-        badgeColor = Colors.purple;
-        break;
-      case ApplicationStatus.rejected:
-        badgeColor = Colors.red;
-        break;
-      case ApplicationStatus.selected:
-        badgeColor = Colors.green;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: badgeColor.withOpacity(0.5)),
-      ),
-      child: Text(
-        _statusToString(status).toUpperCase(),
-        style: TextStyle(
-          color: badgeColor,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 
   static String _statusToString(ApplicationStatus status) {

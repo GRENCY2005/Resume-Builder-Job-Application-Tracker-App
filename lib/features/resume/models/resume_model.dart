@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'dart:convert';
 
 part 'resume_model.g.dart';
 

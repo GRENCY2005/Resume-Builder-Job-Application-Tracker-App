@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/resume_model.dart';
 import '../providers/resume_provider.dart';
-import 'resume_builder_screen.dart';
+import '../../../core/widgets/shared_components.dart';
+import '../widgets/resume_card.dart';
 
 class ResumeListScreen extends ConsumerWidget {
   const ResumeListScreen({super.key});
 
   void _navigateToBuilder(BuildContext context, {ResumeModel? resume}) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ResumeBuilderScreen(existingResume: resume),
-      ),
-    );
+    context.push('/resumes/builder', extra: resume);
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref, ResumeModel resume) {
@@ -164,7 +162,7 @@ class ResumeListScreen extends ConsumerWidget {
 
   Widget _buildBody(BuildContext context, WidgetRef ref, ResumeState state) {
     if (state.isLoading && state.resumes.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingIndicator();
     }
 
     if (state.error != null && state.resumes.isEmpty) {
@@ -186,96 +184,24 @@ class ResumeListScreen extends ConsumerWidget {
     }
 
     if (state.resumes.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.description_outlined, size: 80, color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
-            const SizedBox(height: 24),
-            Text(
-              'No Resumes Found',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create your first resume to get started.',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
+      return const EmptyStateWidget(
+        icon: Icons.description_outlined,
+        title: 'No Resumes Found',
+        message: 'Create your first resume to get started.',
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80), // bottom padding for FAB
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
       itemCount: state.resumes.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final resume = state.resumes[index];
-        return Card(
-          elevation: 0,
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => _showResumePreview(context, resume),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          resume.fullName,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined),
-                            color: Theme.of(context).colorScheme.primary,
-                            tooltip: 'Edit',
-                            onPressed: () => _navigateToBuilder(context, resume: resume),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            color: Theme.of(context).colorScheme.error,
-                            tooltip: 'Delete',
-                            onPressed: () => _confirmDelete(context, ref, resume),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Text(resume.email, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                  const SizedBox(height: 12),
-                  if (resume.skills.isNotEmpty)
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: resume.skills.take(3).map((s) => Chip(
-                        label: Text(s, style: const TextStyle(fontSize: 12)),
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                      )).toList()
-                        ..addAll(resume.skills.length > 3 ? [Chip(label: Text('+${resume.skills.length - 3}', style: const TextStyle(fontSize: 12)), visualDensity: VisualDensity.compact)] : []),
-                    )
-                  else
-                    const Text('No skills added', style: TextStyle(fontStyle: FontStyle.italic)),
-                ],
-              ),
-            ),
-          ),
+        return ResumeCard(
+          resume: resume,
+          onTap: () => _showResumePreview(context, resume),
+          onEdit: () => _navigateToBuilder(context, resume: resume),
+          onDelete: () => _confirmDelete(context, ref, resume),
         );
       },
     );

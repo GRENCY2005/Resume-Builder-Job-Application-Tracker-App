@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
 import '../../applications/models/application_model.dart';
 import '../../applications/providers/application_provider.dart';
+import '../../../core/widgets/shared_components.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -16,7 +16,7 @@ class DashboardScreen extends ConsumerWidget {
     final apps = state.allApplications;
 
     if (state.isLoading && apps.isEmpty) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: AppLoadingIndicator());
     }
 
     // --- Analytics Calculations ---
@@ -68,10 +68,10 @@ class DashboardScreen extends ConsumerWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     childAspectRatio: 1.5,
                     children: [
-                      _buildStatCard(context, 'Total Apps', total.toString(), Icons.analytics_outlined, Colors.blue),
-                      _buildStatCard(context, 'Selected', selected.toString(), Icons.check_circle_outline, Colors.green),
-                      _buildStatCard(context, 'Interviews', interview.toString(), Icons.calendar_month_outlined, Colors.purple),
-                      _buildStatCard(context, 'Rejected', rejected.toString(), Icons.cancel_outlined, Colors.red),
+                      DashboardCard(title: 'Total Apps', value: total.toString(), icon: Icons.analytics_outlined, color: Colors.blue),
+                      DashboardCard(title: 'Selected', value: selected.toString(), icon: Icons.check_circle_outline, color: Colors.green),
+                      DashboardCard(title: 'Interviews', value: interview.toString(), icon: Icons.calendar_month_outlined, color: Colors.purple),
+                      DashboardCard(title: 'Rejected', value: rejected.toString(), icon: Icons.cancel_outlined, color: Colors.red),
                     ],
                   ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, duration: 400.ms),
                   const SizedBox(height: 32),
@@ -167,41 +167,6 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 0,
-      color: color.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: color.withOpacity(0.5)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 28),
-            const Spacer(),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-            ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: color.withOpacity(0.8),
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   List<PieChartSectionData> _getPieSections(List<JobApplicationModel> apps) {
     final Map<ApplicationStatus, int> statusCounts = {};
